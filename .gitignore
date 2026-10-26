@@ -1,0 +1,28 @@
+# Python-generated files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.env
+
+# Local environments
+.venv/
+venv/
+env/
+
+# Study data and generated intermediate files
+data/
+rawdata/
+derivatives/
+outputs/
+figures/generated/
+*.parquet
+*.pkl
+*.pickle
+*.fif
+*.fif.gz
+*.bdf
+*.npy
+*.h5
+*.hdf5
