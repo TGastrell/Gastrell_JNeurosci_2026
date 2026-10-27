@@ -1,8 +1,10 @@
 import unittest
 
 import numpy as np
+import pandas as pd
 
 from analysis.common import utils
+from analysis.common.util_dataloader import crop_full_window_metrics
 
 
 class TestCircularUtilities(unittest.TestCase):
@@ -23,6 +25,22 @@ class TestCircularUtilities(unittest.TestCase):
         )
 
         np.testing.assert_allclose(actual, [0.2, 0.2, -0.2, -0.2])
+
+
+class TestMetricTimeCropping(unittest.TestCase):
+    def test_full_window_metrics_are_cropped_and_rebased(self):
+        source = pd.DataFrame(
+            {
+                "time": [0, 178, 179, 180, 754, 755, 756],
+                "accuracy": range(7),
+            }
+        )
+
+        cropped = crop_full_window_metrics(source)
+
+        self.assertEqual(cropped["time"].tolist(), [0, 1, 2, 575, 576])
+        self.assertEqual(cropped["accuracy"].tolist(), [2, 3, 4, 5, 6])
+        self.assertEqual(source["time"].tolist(), [0, 178, 179, 180, 754, 755, 756])
 
 
 if __name__ == "__main__":

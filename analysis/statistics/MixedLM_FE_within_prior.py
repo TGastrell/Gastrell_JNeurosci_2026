@@ -12,20 +12,29 @@ from analysis.common.paths import (
     derivatives_root,
     within_prior_cache_dir,
 )
-from analysis.common.util_dataloader import load_decoding_data
+from analysis.common.util_dataloader import (
+    crop_full_window_metrics,
+    load_decoding_data,
+)
 
 
 FILE_LABEL = "t--0.95-2_bl--0.35--0.25-0.2-40bpf-clean"
+CROPPED_CACHE_LABEL = (
+    "t--0.25-2_bl--0.35--0.25-0.2-40bpf-clean_cropped_from_full_window"
+)
 OUTPUT_FILES = {
-    "accuracy": "acc_resamp_binned_model_fit_full_window.pkl",
-    "bias": "bias_resamp_binned_model_fit_full_window.pkl",
+    "accuracy": "acc_resamp_binned_model_fit_cropped_from_full_window.pkl",
+    "bias": "bias_resamp_binned_model_fit_cropped_from_full_window.pkl",
 }
 
 
 def fit_model(dv):
     derivatives = derivatives_root()
     cache = within_prior_cache_dir()
-    data_path = cache / f"resamp_binned_decoding_metrics_long_{FILE_LABEL}_for_mixedlm.parquet"
+    data_path = (
+        cache
+        / f"resamp_binned_decoding_metrics_long_{CROPPED_CACHE_LABEL}_for_mixedlm.parquet"
+    )
 
     if data_path.exists():
         print("Loading aggregated decoding metrics...")
@@ -42,6 +51,7 @@ def fit_model(dv):
             ],
             subdirectory=WITHIN_PRIOR_FE_DIRECTORY,
         )
+        df = crop_full_window_metrics(df)
         df["stimDir"] = df["binLabel"]
         df["uniqueTrialID"] = df.groupby("subjectNumber").cumcount()
         df["trialInBlock"] = df.groupby(
@@ -59,8 +69,8 @@ def fit_model(dv):
         )
         df.to_parquet(data_path)
 
-    df["time_secs"] = (df["time"] / 256) - 0.95
-    df = df.query("time_secs >= -0.95").rename(
+    df["time_secs"] = (df["time"] / 256) - 0.25
+    df = df.rename(
         columns={"stimKappa": "Coherence", "priorKappa": "Prior_Precision"}
     )
     float64_cols = df.select_dtypes(include="float64").columns

@@ -75,7 +75,6 @@ def generate_upper(axes):
 
     print('Data loaded successfully. Applying final transformations...')
     df['time_secs'] = df['time'] / 256 - 0.95
-    df['time_secs'] = df['time_secs'] - 0.7 # uncomment for early baseline analyses
     df = df.rename(columns={'stimKappa': 'Coherence', 
                             'priorKappa': 'Prior_Precision', 
                             'signed_error': 'Behavioural_Bias'})
@@ -231,7 +230,6 @@ def generate_lower(axes):
 
     print('Data loaded successfully. Applying final transformations...')
     df['time_secs'] = df['time'] / 256 - 0.95
-    df['time_secs'] = df['time_secs'] - 0.7 # uncomment for early baseline analyses
     df = df.rename(columns={'stimKappa': 'Coherence', 
                             'priorKappa': 'Prior_Precision', 
                             'signed_error': 'Behavioural_Bias'})

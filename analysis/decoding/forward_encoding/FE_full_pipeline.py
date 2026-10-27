@@ -236,6 +236,9 @@ def main(sub_dir, baseline="standard", time_window="cropped"):
     FE_epochs.save(output_dir / f'{sub}_task-TG-MotEst-2.0_{label}_FE-pred-epochs.fif.gz', overwrite = True)
 
 def get_resampled_data(epochs):
+    '''
+    Resample trials in each stimulus bin to be even around the full circle within each prior kappa condition
+    '''
     epochs.metadata['uniqueID'] = np.arange(0,len(epochs.metadata),1)
     df = epochs.metadata
     n_bins = 32
@@ -321,22 +324,6 @@ def within_prior(sub_dir, resamp=True, baseline="standard", time_window="cropped
 
         np.save(output_dir / f'{sub}_task-TG-MotEst-2.0_{label}_pk{condition}_FE-weights.npy', weights) # channels x sensors x time.
         np.save(output_dir / f'{sub}_task-TG-MotEst-2.0_{label}_pk{condition}_FE-xval-weights.npy', xval_weights) # trials x channels x sensors x time
-        
-
-        # # Use pre-trained weights from above to predict the channel activations for each test trial
-        # test_query = f'not ({train_query})'
-        # X_test = condition_epochs[test_query].get_data() # trials x elec x time
-
-        # (pred_chan, # trials x channels x time predicted channel activations
-        # pred # n_time x n_trials predicted angles
-        # ) = xdecode(X_test, weights)
-
-        # # Repackage the predicted channel activations into a new MNE Epochs object
-        # FE_condition_epochs.append(repackage_epochs(xval_pred_chan, 
-        #                             pred_chan, 
-        #                             condition_epochs, 
-        #                             train_query, 
-        #                             test_query))
 
         
         # Create a new epochs object with the 16 predicted channel activations

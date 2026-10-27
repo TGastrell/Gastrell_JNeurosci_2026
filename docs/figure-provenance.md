@@ -22,7 +22,7 @@ Figures S1 and S4 share a plotting script and use different intermediate data/de
 
 The forward-encoding source and shared analysis utilities are in `analysis/decoding/forward_encoding/` and `analysis/common/`. Before fitting decoding models, the corresponding forward-encoding predictions must have been converted to per-subject decoding-metric parquet files.
 
-The forward-encoding module can run either the main decoder (`--analysis main`) or within-prior decoder (`--analysis within-prior`). Run `python -m analysis.decoding.forward_encoding.FE_chans2metrics --analysis main` for main predictions in `train_sk2_unif`, or use `--analysis within-prior` for predictions in `train_within_prior_resamp_binned`. Within-prior predictions and metrics are kept in that separate derivatives subdirectory; group caches and fitted models live in `outputs/cache/within_prior` (or `$MOTEST_CACHE_DIR/within_prior`). Existing filenames are retained. The within-prior figures use the decoder's `binLabel` as their stimulus direction. The abandoned high-coherence test decoder is excluded.
+The forward-encoding module can run either the main decoder (`--analysis main`) or within-prior decoder (`--analysis within-prior`). Run `python -m analysis.decoding.forward_encoding.FE_chans2metrics --analysis main` for main predictions in `train_sk2_unif`, or use `--analysis within-prior` for predictions in `train_within_prior_resamp_binned`. Main analyses and S1 use cropped prediction/metric products; within-prior predictions and full-window metrics are kept in their separate derivatives subdirectory. Group caches and fitted models live in `outputs/cache/within_prior` (or `$MOTEST_CACHE_DIR/within_prior`). The supplementary within-prior group summaries crop full-window metrics to `-0.25..2 s` and use cache filenames marked `cropped_from_full_window`. The within-prior figures use the decoder's `binLabel` as their stimulus direction. The abandoned high-coherence test decoder is excluded.
 
 Run these commands from the project root to create model files consumed by the figures:
 
@@ -31,7 +31,7 @@ Run these commands from the project root to create model files consumed by the f
 | `cpp_model_fit.pkl` | `python -m analysis.statistics.CPP` | Figure 4 |
 | `fe_acc_model_fit.pkl` | `python -m analysis.statistics.MixedLM_FE --dv accuracy` | Figure 6 |
 | `original_bias_model_fit.pkl` | `python -m analysis.statistics.MixedLM_FE --dv bias` | Figure 7 |
-| `acc_resamp_binned_model_fit_full_window.pkl` in `within_prior/` | `python -m analysis.statistics.MixedLM_FE_within_prior --dv accuracy` | Figure S2 |
-| `bias_resamp_binned_model_fit_full_window.pkl` in `within_prior/` | `python -m analysis.statistics.MixedLM_FE_within_prior --dv bias` | Figure S3 |
+| `acc_resamp_binned_model_fit_cropped_from_full_window.pkl` in `within_prior/` | `python -m analysis.statistics.MixedLM_FE_within_prior --dv accuracy` | Figure S2 |
+| `bias_resamp_binned_model_fit_cropped_from_full_window.pkl` in `within_prior/` | `python -m analysis.statistics.MixedLM_FE_within_prior --dv bias` | Figure S3 |
 
 The CPP model reads EEG derivatives directly. The decoding model scripts use per-subject decoding metrics under the derivatives tree and aggregate them into the configured cache when needed. Figure 6/7 model times are stored in seconds; S2/S3 model times remain sample indices because their plotting scripts convert them to seconds. All main analyses and main-text figures (Figures 2–8; Figure 1 is a design schematic) have been reproduced successfully. The supplementary analyses and figures (S1–S5) have not yet been tested; see the [reproduction guide](reproduction-guide.md) for execution order and prerequisites.

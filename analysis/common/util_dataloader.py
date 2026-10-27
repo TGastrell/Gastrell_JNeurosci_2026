@@ -2,6 +2,21 @@ import os
 import pathlib 
 import pandas as pd
 
+
+def crop_full_window_metrics(data: pd.DataFrame) -> pd.DataFrame:
+    """Crop full-window metric samples to -0.25..2 s and reset time to zero."""
+    sample_rate = 256
+    full_window_start = -0.95
+    crop_start = -0.25
+    crop_end = 2
+    first_sample = round((crop_start - full_window_start) * sample_rate)
+    last_sample = first_sample + round((crop_end - crop_start) * sample_rate)
+
+    cropped = data.loc[data["time"].between(first_sample, last_sample)].copy()
+    cropped["time"] -= first_sample
+    return cropped
+
+
 def load_beh_data(rawdata_path: str, bads = False) -> pd.DataFrame:
     """
     Load behavioral data from the specified directory and filter it.

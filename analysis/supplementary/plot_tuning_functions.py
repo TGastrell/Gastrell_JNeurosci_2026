@@ -12,7 +12,10 @@ from analysis.common.paths import (
     figure_output_path,
     within_prior_cache_dir,
 )
-from analysis.common.util_dataloader import load_decoding_data
+from analysis.common.util_dataloader import (
+    crop_full_window_metrics,
+    load_decoding_data,
+)
 
 TICK_LABEL_SIZE = 18
 AX_LABEL_SIZE = 20
@@ -84,8 +87,8 @@ def plot_aggregate_acc(ax, df, split_by, palette=None):
     sns.despine(trim=True, ax=ax_)
 
 
-def get_tuning_funcs(epochs):
-    stims = epochs.metadata['priorDir'].values  # shape (n_trials,)
+def get_tuning_funcs(epochs, time_origin):
+    stims = epochs.metadata['stimDir'].values  # shape (n_trials,)
     forward_model = IEM.get_forward_model(stims)
     aligned = IEM.align_C_test(epochs.get_data(), stims, forward_model).astype('float32')
 
@@ -99,8 +102,8 @@ def get_tuning_funcs(epochs):
     channel_angles = dict(zip(epochs.ch_names, np.linspace(-np.pi, np.pi, 16, endpoint=False).round(2)))
     df['channel'] = df['channel'].map(channel_angles)
     df['channel'] = df['channel'].astype('float')
-    df['time'] = df['time'] - 0.95
-    df = df.query('time > -0.95 & time < 2')
+    df['time'] = df['time'] - time_origin
+    df = df.query('time > -0.25 & time < 2')
     return (df[['subjectNumber','time', 'channel','stimKappa', 'priorKappa', 'value']]
             .groupby(['subjectNumber','time', 'channel','stimKappa', 'priorKappa'])
             .mean()
@@ -124,13 +127,17 @@ if __name__ == '__main__':
     within_prior = args.analysis == 'within-prior'
 
     if within_prior:
-        tf_fname = 'allsub_IEM_train_within_resamp_binned_channel_activities_long_t--0.95-2_bl--0.35--0.25-0.2-40bpf-clean.parquet'
+        tf_fname = 'allsub_IEM_train_within_resamp_binned_channel_activities_long_t--0.25-2_bl--0.35--0.25-0.2-40bpf-clean_cropped_from_full_window.parquet'
         file_label='t--0.95-2_bl--0.35--0.25-0.2-40bpf-clean'
-        metric_pth = within_prior_cache_dir() / f'trial_avg_decoding_metrics_resamp_binned_long_{file_label}.parquet'
+        metric_time_origin = 0.25
+        metric_cache_label = 't--0.25-2_bl--0.35--0.25-0.2-40bpf-clean_cropped_from_full_window'
+        metric_pth = within_prior_cache_dir() / f'trial_avg_decoding_metrics_resamp_binned_long_{metric_cache_label}.parquet'
         fe_subdirectory = WITHIN_PRIOR_FE_DIRECTORY
     else:
-        tf_fname = 'allsub_IEM_channel_activities_long_t--0.95-2_bl--0.35--0.25-0.2-40bpf-clean.parquet'
-        file_label='t--0.95-2_bl--0.35--0.25-0.2-40bpf-clean'
+        tf_fname = 'allsub_IEM_channel_activities_long_t--0.25-2_bl--0.35--0.25-0.2-40bpf-clean.parquet'
+        file_label='t--0.25-2_bl--0.35--0.25-0.2-40bpf-clean'
+        time_origin = 0.25
+        metric_time_origin = 0.25
         metric_pth = analysis_cache_dir() / f'trial_avg_decoding_metrics_long_{file_label}.parquet'
         fe_subdirectory = 'train_sk2_unif'
 
@@ -143,6 +150,8 @@ if __name__ == '__main__':
             ['subjectNumber', 'time', 'stimKappa', 'priorKappa', 'accuracy'],
             subdirectory=fe_subdirectory,
         )
+        if within_prior:
+            metrics = crop_full_window_metrics(metrics)
         metrics = (
             metrics.groupby(
                 ['subjectNumber', 'time', 'stimKappa', 'priorKappa']
@@ -151,7 +160,7 @@ if __name__ == '__main__':
             .reset_index()
         )
 
-    metrics['time_secs'] = metrics['time'] / 256 - 0.95
+    metrics['time_secs'] = metrics['time'] / 256 - metric_time_origin
     metrics.to_parquet(metric_pth, index=False)
     metrics['time'] = metrics['time_secs']
 
@@ -179,7 +188,12 @@ if __name__ == '__main__':
             epochs = mne.read_epochs(epochs_file, preload=True)
             n_trials, n_chans, n_time = epochs.get_data().shape
 
-            all_pts.append(get_tuning_funcs(epochs))
+            if within_prior:
+                epochs.crop(tmin=-0.25, tmax=2)
+                activity_time_origin = 0.25
+            else:
+                activity_time_origin = time_origin
+            all_pts.append(get_tuning_funcs(epochs, activity_time_origin))
             del epochs  # free memory
 
         df = pd.concat(all_pts, ignore_index=True)

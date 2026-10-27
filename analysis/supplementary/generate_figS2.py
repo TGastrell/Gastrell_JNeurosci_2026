@@ -12,7 +12,10 @@ from analysis.common.paths import (
     within_prior_cache_dir,
 )
 from scipy.stats import false_discovery_control
-from analysis.common.util_dataloader import load_decoding_data
+from analysis.common.util_dataloader import (
+    crop_full_window_metrics,
+    load_decoding_data,
+)
 import pickle
 from analysis.common.plotting_helpers import pairwise_cluster_tests, plot_pvals, plot_timeseries_comparison, subject_level_summary
 
@@ -26,7 +29,8 @@ def generate_figS2():
 
     derivatives = derivatives_root()
     file_label='t--0.95-2_bl--0.35--0.25-0.2-40bpf-clean'
-    pth = within_prior_cache_dir() / f'trial_avg_decoding_metrics_resamp_binned_long_{file_label}.parquet'
+    cache_label='t--0.25-2_bl--0.35--0.25-0.2-40bpf-clean_cropped_from_full_window'
+    pth = within_prior_cache_dir() / f'trial_avg_decoding_metrics_resamp_binned_long_{cache_label}.parquet'
 
     if not pth.exists():
         print('Aggregated data not found, loading and processing individual subject data... \nThis only needs to be done once, subsequent runs will load the aggregated data and be much faster.')
@@ -47,6 +51,7 @@ def generate_figS2():
                                             'accuracy',
                                             'bias'],
                                             subdirectory=WITHIN_PRIOR_FE_DIRECTORY)
+        big_df = crop_full_window_metrics(big_df)
         big_df['stimDir'] = big_df['binLabel']
         big_df['uniqueTrialID'] = big_df.groupby(['subjectNumber']).cumcount()
         # Compute additional metrics
@@ -78,8 +83,7 @@ def generate_figS2():
         df = pd.read_parquet(pth)
 
     print('Data loaded successfully. Applying final transformations...')
-    df['time_secs'] = df['time'] / 256 - 0.95
-    df = df.query('time_secs >= -0.95')
+    df['time_secs'] = df['time'] / 256 - 0.25
     df = df.rename(columns={'stimKappa': 'Coherence', 
                             'priorKappa': 'Prior_Precision', 
                             'signed_error': 'Behavioural_Bias'})
@@ -228,7 +232,7 @@ def generate_figS2():
     # Load fitted model for plotting p-values of fixed effects
     print('Loading fitted model for plotting p-values of fixed effects...')
     mod_pth = within_prior_cache_dir()
-    with open(mod_pth / 'acc_resamp_binned_model_fit_full_window.pkl', 'rb') as file:
+    with open(mod_pth / 'acc_resamp_binned_model_fit_cropped_from_full_window.pkl', 'rb') as file:
         mod = pickle.load(file)
 
 
@@ -243,7 +247,7 @@ def generate_figS2():
                                     'Coherence:Prior_Precision': rf'$\kappa_s$ x $\kappa_p$'})
                                     .drop(columns=['subjectNumber Var']))
 
-    fdr_p['time'] = (fdr_p['time'] / 256) - 0.95
+    fdr_p['time'] = (fdr_p['time'] / 256) - 0.25
     plot_pvals(fdr_p.query('time <= 0.75'), 
             dv='Decoding Accuracy', 
             legend=False,
