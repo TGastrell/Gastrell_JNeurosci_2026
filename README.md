@@ -2,7 +2,7 @@
 
 Analysis code for the manuscript **Late Integration of Prior Expectations During Precision-Weighted Perceptual Decisions** Gastrell, Rangelov & Mattingley (2026) 10.1523/JNEUROSCI.0612-26.2026.
 
-Only the de-identified raw study data are available for download from the separate data repository. Users must run the preprocessing steps in the reproduction guide to create the EEG derivatives required for EEG analyses; preprocessed derivatives are not provided.
+Only the de-identified raw study data are available for download from the separate data repository (https://doi.org/10.48610/777ae2d). Users must run the preprocessing steps in the reproduction guide to create the EEG derivatives required for EEG analyses; preprocessed derivatives are not provided.
 
 ## Getting started
 
